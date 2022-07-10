@@ -1,0 +1,10 @@
+Pillow
+torch==1.9.0
+torchvision==0.10.0
+cython
+scipy
+shapely
+timm==0.5.4
+h5py
+submitit
+scikit-image
