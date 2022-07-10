@@ -25,6 +25,7 @@ from detectron2.utils.logger import setup_logger
 from Mask2Former.mask2former import add_maskformer2_config
 from predictor import VisualizationDemo
 
+WINDOW_NAME = "mask2former demo"
 TRAVERSABLE = [3,11,52,53,59,91,96,121]
 MODEL_DIR = "../data/model_final_5c90d4.pkl"
 CONFIGS_DIR = "../data/maskformer2_R50_bs16_160k.yaml"
