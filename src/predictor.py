@@ -1,6 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Copied from: https://github.com/facebookresearch/Mask2Former/blob/main/demo/predictor.py
-# Lines 67 has been modified.
+# Line 67 has been modified.
 import atexit
 import bisect
 import multiprocessing as mp
