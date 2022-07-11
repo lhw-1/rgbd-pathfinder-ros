@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pathfinder</name>
+	<name>pathfinder</name>
   <version>0.0.0</version>
   <description>The pathfinder package</description>
 
