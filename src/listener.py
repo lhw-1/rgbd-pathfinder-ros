@@ -34,7 +34,7 @@ CONFIGS_DIR = "../data/maskformer2_R50_bs16_160k.yaml"
 IMAGE_PATH = "../data/" # Input from camera
 IMAGE_COUNTER = 0
 RGBDP_PATH = "../data/rgbdp_outputs/"
-ANGULARZ = 0
+ANGULAR_Z = 0
 DEMO = 0
 LOGGER = 0
 
@@ -142,10 +142,10 @@ def panoptic_segmentation(demo, logger, args_input, args_output):
         return panoptic_seg, segments_info
 
 
-def publish_steer(linearx, angularz):
+def publish_steer(linear_x, angular_z):
     vel_msg = Twist()
-    vel_msg.linear.x = linearx
-    vel_msg.angular.z = angularz
+    vel_msg.linear.x = linear_x
+    vel_msg.angular.z = angular_z
     vel_pub.publish(vel_msg)
    # print(vel_msg)
 
@@ -169,7 +169,7 @@ def callback(data):
     cv2.imwrite(IMAGE_PATH + str(IMAGE_COUNTER) + ".png", image)
     IM_WIDTH = 640
     IM_HEIGHT = 480
-    STEER_THRESHOLD = IM_WIDTH // 16
+    STEER_THRESHOLD = IM_WIDTH // 20
 
     # Perform Mask2Former Segmentation
     global DEMO
@@ -193,23 +193,25 @@ def callback(data):
     traversable_y = IM_HEIGHT // 2
     for path in traversable_paths:
         draw.ellipse((path['x'] - 2, path['y'] - 2, path['x'] + 2, path['y'] + 2), fill=(255, 0, 0))
-        if path['y'] > (5 * IM_HEIGHT / 8) and path['y'] < (7 * IM_HEIGHT / 8):
+        # Choose a non-deterministic point between 7/10 and 8/10 of the image height
+        # There is bias towards paths to the right
+        if path['y'] > (7 * IM_HEIGHT // 10) and path['y'] < (8 * IM_HEIGHT // 10):
             traversable_x = path['x']
             traversable_y = path['y']
     
     dx = (traversable_x - (IM_WIDTH // 2))
-    steer = 0.0
-    # Change steer based on dx
+    angular_z = 0.0
+    # Change angular_z based on dx
     print("Path found at X: " + str(traversable_x) + ", Y: " + str(traversable_y) + ".")
     dx = (traversable_x - (IM_WIDTH // 2))
     if dx > STEER_THRESHOLD:
-        steer = -0.5
+        angular_z = -0.5
         print("Action to be taken: Rotate Right.")
     elif dx < -STEER_THRESHOLD:
-        steer = 0.5
+        angular_z = 0.5
         print("Action to be taken: Rotate Left.")
     else:
-        steer = 0.0
+        angular_z = 0.0
         print("Action to be taken: Move Forward.")
     
     #rgb_img_traversable.save(RGBDP_PATH + "traversable_" + str(IMAGE_COUNTER) + ".png", "PNG")
@@ -218,8 +220,8 @@ def callback(data):
     cv2.waitKey(10)
 
     #rgb_img_traversable.show()
-    global ANGULARZ
-    ANGULARZ = steer
+    global ANGULAR_Z
+    ANGULAR_Z = angular_z
     IMAGE_COUNTER += 1
 
 def listener():
@@ -227,15 +229,15 @@ def listener():
     global DEMO
     global LOGGER
     DEMO, LOGGER = load_model()
-    rospy.Subscriber("/camera/color/image_raw", Image, callback, queue_size=1, buff_size = 1000000000)
+    rospy.Subscriber("/camera/color/image_raw", Image, callback, queue_size = 1, buff_size = 2147483647) # No reason for buff size other than that it's a big number
     #rospy.spin()
     rate = rospy.Rate(10)
-    global ANGULARZ
+    global ANGULAR_Z
     while not rospy.is_shutdown():
-        if ANGULARZ == 0.0:
-            publish_steer(0.4, ANGULARZ)
+        if ANGULAR_Z == 0.0:
+            publish_steer(0.4, ANGULAR_Z)
         else:
-            publish_steer(0.0, ANGULARZ)
+            publish_steer(0.0, ANGULAR_Z)
         rate.sleep()
 
 if __name__ == '__main__':
