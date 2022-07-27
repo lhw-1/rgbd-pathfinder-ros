@@ -24,17 +24,15 @@ STEER_THRESHOLD = IM_WIDTH // 32        # Determine whether a diagonal line is c
 CENTRAL_THRESHOLD = IM_WIDTH // 32      # Determine when to move the robot to the center
 ROSPY_RATE = rospy.Rate(20)
 DEMO, LOGGER = load_model()
-LINEAR_X_VEL = 0.4
-LINEAR_Y_VEL = 0.4
-ANGULAR_Z_VEL = 0.5
+LINEAR_X_VEL = 0.4                # Linear x Velocity
+LINEAR_Y_VEL = 0.4                # Linear y Velocity
+ANGULAR_Z_VEL = 0.5               # Angular z Velocity
+LINEAR_X_COUNTER = 50                   # Determine duration for the robot to move forward
+LINEAR_X_BACKWARD_COUNTER = 30          # Determine duration for the robot to move backward
+LINEAR_Y_COUNTER = 30                   # Determine duration for the robot to move sideways
+ANGULAR_Z_COUNTER = 10                  # Determine duration for the robot to rotate
 
-# Parameters: The counter values to measure how long each action takes
-LINEAR_X_COUNTER = 50
-LINEAR_X_BACKWARD_COUNTER = 30
-LINEAR_Y_COUNTER = 30
-ANGULAR_Z_COUNTER = 10
-
-# Global Variables (Modified as script runs)
+# Global Variables (These are modified as the script runs)
 IMAGE_COUNTER = 0
 FIRST_IMAGE_RECEIVED = False
 LINEAR_X = 0.0
