@@ -114,12 +114,12 @@ def callback(data):
         movement_counter = LINEAR_X_BACKWARD_COUNTER
     elif diff_start > CENTRAL_THRESHOLD:
         LINEAR_X = 0.0
-        LINEAR_Y = LINEAR_Y_VEL
+        LINEAR_Y = -LINEAR_Y_VEL
         ANGULAR_Z = 0.0
         print("Action taken: Move Right.")
     elif diff_start < -CENTRAL_THRESHOLD:
         LINEAR_X = 0.0
-        LINEAR_Y = -LINEAR_Y_VEL
+        LINEAR_Y = LINEAR_Y_VEL
         ANGULAR_Z = 0.0
         print("Action taken: Move Left.")
     elif diff_x > STEER_THRESHOLD:
@@ -142,12 +142,7 @@ def callback(data):
         movement_counter = LINEAR_X_COUNTER
     
     while not rospy.is_shutdown() and movement_counter > 0:
-        if not LINEAR_Y == 0.0:
-            publish_steer(LINEAR_X_VEL, LINEAR_Y, ANGULAR_Z)
-        elif not ANGULAR_Z == 0.0:
-            publish_steer(LINEAR_X_VEL, LINEAR_Y, ANGULAR_Z)
-        else:
-            publish_steer(0.0, ANGULAR_Z)
+        publish_steer(LINEAR_X, LINEAR_Y, ANGULAR_Z)
         ROSPY_RATE.sleep()
         movement_counter -= 1
 
