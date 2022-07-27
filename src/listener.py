@@ -112,11 +112,13 @@ def callback(data):
         LINEAR_Y = -LINEAR_Y_VEL
         ANGULAR_Z = 0.0
         print("Action taken: Move Right.")
+        movement_counter = LINEAR_Y_COUNTER
     elif diff_start < -CENTRAL_THRESHOLD:
         LINEAR_X = 0.0
         LINEAR_Y = LINEAR_Y_VEL
         ANGULAR_Z = 0.0
         print("Action taken: Move Left.")
+        movement_counter = LINEAR_Y_COUNTER
     elif diff_x > STEER_THRESHOLD:
         LINEAR_X = 0.0
         LINEAR_Y = 0.0
