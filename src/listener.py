@@ -22,7 +22,6 @@ IM_WIDTH = 640
 IM_HEIGHT = 480
 STEER_THRESHOLD = IM_WIDTH // 32        # Determine whether a diagonal line is considered forward or rotate
 CENTRAL_THRESHOLD = IM_WIDTH // 32      # Determine when to move the robot to the center
-ROSPY_RATE = rospy.Rate(20)
 DEMO, LOGGER = load_model()
 LINEAR_X_VEL = 0.4                # Linear x Velocity
 LINEAR_Y_VEL = 0.4                # Linear y Velocity
@@ -143,12 +142,14 @@ def callback(data):
     
     while not rospy.is_shutdown() and movement_counter > 0:
         publish_steer(LINEAR_X, LINEAR_Y, ANGULAR_Z)
-        ROSPY_RATE.sleep()
+        rate = rospy.Rate(20)
+        rate.sleep()
         movement_counter -= 1
 
 def listener():
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("/camera/color/image_raw", Image, callback, queue_size=1, buff_size = 1000000000)
+    rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         #if not FIRST_IMAGE_RECEIVED:
         #    publish_steer(0.0, 0.0)
@@ -157,7 +158,7 @@ def listener():
         #    publish_steer(0.3, ANGULARZ)
         #else:
         #    publish_steer(0.0, ANGULARZ)
-        ROSPY_RATE.sleep()
+        rate.sleep()
 
 if __name__ == '__main__':
     vel_pub = rospy.Publisher('/spot/cmd_vel', Twist, queue_size=10)
