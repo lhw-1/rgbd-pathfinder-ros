@@ -140,9 +140,9 @@ def callback(data):
         print("Action taken: Move Forward.")
         movement_counter = LINEAR_X_COUNTER
     
+    rate = rospy.Rate(20)
     while not rospy.is_shutdown() and movement_counter > 0:
         publish_steer(LINEAR_X, LINEAR_Y, ANGULAR_Z)
-        rate = rospy.Rate(20)
         rate.sleep()
         movement_counter -= 1
 
