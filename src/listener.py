@@ -47,7 +47,16 @@ def publish_steer(linear_x, linear_y, angular_z):
     vel_pub.publish(vel_msg)
 
 
-def receive_image(data):
+def callback(data):
+    
+    # Access global variables
+    global IMAGE_COUNTER
+    global FIRST_IMAGE_RECEIVED
+    global LINEAR_X
+    global LINEAR_Y
+    global ANGULAR_Z
+
+    # Receive Image from camera
     print("Processing frame | Delay:%6.3f" % (rospy.Time.now() - data.header.stamp).to_sec())
     delayed_secs = (rospy.Time.now() - data.header.stamp).to_sec()
     if delayed_secs > 0.1:
@@ -61,19 +70,6 @@ def receive_image(data):
     # cv2.waitKey(10)
     # rospy.sleep(1)
     cv2.imwrite(IMAGE_DIR + str(IMAGE_COUNTER) + ".png", image)
-
-
-def callback(data):
-    
-    # Access global variables
-    global IMAGE_COUNTER
-    global FIRST_IMAGE_RECEIVED
-    global LINEAR_X
-    global LINEAR_Y
-    global ANGULAR_Z
-
-    # Receive Image from camera
-    receive_image(data)
     
     # Perform Mask2Former Segmentation
     panoptic_seg, segments_info = panoptic_segmentation(DEMO, LOGGER, [IMAGE_DIR + str(IMAGE_COUNTER) + ".png"], '../data/outputs/m2f_' + str(IMAGE_COUNTER) + '.png')
