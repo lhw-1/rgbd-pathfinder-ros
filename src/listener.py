@@ -10,7 +10,8 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 
 # Local Imports
-from pathfinder import calculate_traversable_paths, draw_paths
+from converter import convert_to_bev, convert_to_monochrome
+from pathfinder import calculate_traversable_paths, draw_paths, map_segmentation_ids
 from segmentation import load_model, panoptic_segmentation
 
 # Paths
@@ -74,11 +75,37 @@ def callback(data):
     # Perform Mask2Former Segmentation
     panoptic_seg, segments_info = panoptic_segmentation(DEMO, LOGGER, [IMAGE_DIR + str(IMAGE_COUNTER) + ".png"], '../data/outputs/m2f_' + str(IMAGE_COUNTER) + '.png')
 
+    # Convert the Panoptic Segmentation Tensor into NumPy array
+    panoptic_seg = panoptic_seg.cpu().clone().detach().numpy()
+
+    # Map the Segmentation image to traversable / non-traversable categories
+    traversable_seg = map_segmentation_ids(panoptic_seg, segments_info)
+
+    # Convert Segmentation to Monochrome
+    traversable_seg_mnc = convert_to_monochrome(traversable_seg)
+
+    # Convert Monochrome to Bird's Eye View
+    traversable_seg_bev = convert_to_bev(traversable_seg_mnc)
+
+    # TODO TODO TODO Using the BEV Calculated, map it into the ROS Global Planner & obtain the traversable path. From there determine direction to travel
+
+
+
+
+
+
+
+
+
+
+
+
+
     # Calculate traversable paths and areas
-    _, traversable_paths = calculate_traversable_paths(panoptic_seg, segments_info)
-    
+    _, traversable_paths = calculate_traversable_paths(traversable_seg_bev)
+
     # Calculate and draw central path
-    traversable_point, starting_point, traversable_node_found, traversable_array = draw_paths(IM_WIDTH, IM_HEIGHT, IMAGE_COUNTER, traversable_paths)
+    traversable_point, starting_point, traversable_node_found, traversable_array = draw_paths(traversable_seg_bev, traversable_paths)
 
     # Once the path for the first image is found, allow SPOT to move
     FIRST_IMAGE_RECEIVED = True

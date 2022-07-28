@@ -14,27 +14,30 @@ def generate_mapping(segments_info):
     return mapping
 
 
-def calculate_traversable_paths(panoptic_seg, segments_info):
-
-    # Convert the Panoptic Segmentation Tensor into NumPy array
-    panoptic_seg_arr = panoptic_seg.cpu().clone().detach().numpy()
-
+def map_segmentation_ids(panoptic_seg, segments_info):
     # Map the ids to the correct category ids using segments_info
     segments_mapping = generate_mapping(segments_info)
     apply_mapping = lambda id, segments_info : segments_info[id]
     apply_mapping = np.vectorize(apply_mapping)
-    panoptic_seg_arr = apply_mapping(panoptic_seg_arr, segments_mapping)
+    traversable_seg = apply_mapping(panoptic_seg, segments_mapping)
+
+    for row in traversable_seg:
+        # Filter all non-traversable areas to -1
+        for i in range(len(row)):
+            if row[i] not in TRAVERSABLE:
+                row[i] = -1
+
+    return traversable_seg
+
+
+def calculate_traversable_paths(panoptic_seg):
 
     # TODO: Make this more efficient using np.vectorize or otherwise
-    # TODO: There must be a better way to iterate over a NumPy array
-    # TODO: Forking roads may require more consideration
     traversable_areas = []
     traversable_paths = []
     row_idx = 0
-    for row in panoptic_seg_arr:
-        # Filter all non-traversable areas to -1
-        # Append all traversable areas to traversable_areas (list of dictionaries)
-        # For every traversable area, find the center
+    for row in panoptic_seg:
+        # Filter all non-traversable areas to -1 and find all traversable areas & traversable paths
         count = 0
         for i in range(len(row)):
             if row[i] not in TRAVERSABLE:
@@ -50,10 +53,12 @@ def calculate_traversable_paths(panoptic_seg, segments_info):
     return traversable_areas, traversable_paths
 
 
-def draw_paths(IM_WIDTH, IM_HEIGHT, IMAGE_COUNTER, traversable_paths):
+def draw_paths(traversable_seg_bev, traversable_paths):
 
     # Open Image
-    rgb_img = PILImage.open("../data/outputs/m2f_" + str(IMAGE_COUNTER) + ".png")
+    IM_WIDTH = len(rgb_img[0])
+    IM_HEIGHT = len(rgb_img)
+    rgb_img = PILImage.fromarray(traversable_seg_bev.astype('uint8'), 'RGB')
     rgb_img_map = rgb_img.load()
     rgb_img_traversable = PILImage.new(rgb_img.mode, rgb_img.size)
     rgb_img_traversable_map = rgb_img_traversable.load()
