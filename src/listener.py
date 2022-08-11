@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import rospy
 import ros_numpy
+import sys
 
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
@@ -11,7 +12,9 @@ from sensor_msgs.msg import Image
 
 # Local Imports
 from converter import convert_to_bev, convert_to_monochrome
+from node import Node
 from pathfinder import calculate_traversable_paths, draw_paths, map_segmentation_ids
+from pathplanner import PathPlanner
 from segmentation import load_model, panoptic_segmentation
 
 # Paths
@@ -32,12 +35,19 @@ LINEAR_X_BACKWARD_COUNTER = 30          # Determine duration for the robot to mo
 LINEAR_Y_COUNTER = 30                   # Determine duration for the robot to move sideways
 ANGULAR_Z_COUNTER = 10                  # Determine duration for the robot to rotate
 
+# Goals
+# These variables are set according to the map grid system, not the actual pixel locations
+START_POINT = (0, 0)                        # Start is Bottom Center of the Image (Current Position)
+GOAL_POINT = (0, (IM_HEIGHT // 4) * 5)      # Goal is North of Current Position, beyond the Image
+# GOAL_POINT = [sys.argv[1], sys.argv[2]]
+
 # Global Variables (These are modified as the script runs)
 IMAGE_COUNTER = 0
 FIRST_IMAGE_RECEIVED = False
 LINEAR_X = 0.0
 LINEAR_Y = 0.0
 ANGULAR_Z = 0.0
+
 
 
 def publish_steer(linear_x, linear_y, angular_z):
@@ -88,10 +98,8 @@ def callback(data):
     traversable_seg_bev = convert_to_bev(traversable_seg_mnc)
 
     # TODO TODO TODO Using the BEV Calculated, map it into the ROS Global Planner & obtain the traversable path. From there determine direction to travel
-
-
-
-
+    planner = PathPlanner(traversable_seg_bev, START_POINT, GOAL_POINT)
+	planner.plan()
 
 
 
