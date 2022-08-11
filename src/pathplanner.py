@@ -1,31 +1,34 @@
 # Referenced from: https://github.com/sanchithaseshadri/PathPlanningAstar/blob/master/astar.py
 
 import math
-import rospy
+import numpy as np
+import cv2
 
+from astar import a_star
 from map import Map
 from node import Node
-
-ROBOT_SIZE = 0.1 
-G_MULTIPLIER = 0.2
-MOVES = [ (0.2, radians(0)), 	# move ahead
-		  (-0.2, radians(0)), 	# move backwards
-		  (0, radians(90)), 	# turn left
-		  (0, -radians(90)) ]	# turn right
-TOLERANCE = 0.2
+from transformations import cartesian_to_pixel
 
 class PathPlanner:
-	def __init__(self, img, start, goal):
+    def __init__(self, img, start, goal):
         print("Building map...")
-        self.map = Map(img).grid_map
-        self.start = Node(start[0], start[1])
-        self.goal = Node(goal[0], goal[1])
+        self.map = Map(img)
+        self.grid_map = self.map.grid_map
+        self.img_height = len(img)
+        self.img_width = len(img[0])
+        self.map_height = self.map.fullheight
+        self.map_width = self.map.fullwidth
+        self.start = Node(start[0], start[1] + (self.img_height // 2))
+        self.goal = Node(goal[0], goal[1] + (self.img_height // 2))
+        self.theta = 0
         print("Map built. Planner initialized.")
 
     def plan(self):
-        final = a_star(self.start, self.goal, self.map)
+        final = a_star(self.start, self.goal, self.grid_map)
+        planned_paths = np.full((self.map_height, self.map_width), 0)
         if final == None:
             print("Path not found.")
+            return None
         else:
             print("Constructing path..")
             path = self.construct_path(final)	# path in world coordinates
@@ -38,7 +41,10 @@ class PathPlanner:
             points = points[1:]
             points.append((self.goal.x, self.goal.y))
             for p in range(len(points)):
-                print("x:", points[p][0], " y:", points[p][1])
+                # print("x:", points[p][0], " y:", points[p][1])
+                pixel_p = cartesian_to_pixel((points[p][0], points[p][1]), (self.map_width, self.map_height))
+                print("Cx:", pixel_p[0], " Cy:", pixel_p[1])
+                planned_paths[pixel_p[1]][pixel_p[0]] = 128
             # first process the points
             translate_x = points[0][0]
             translate_y = points[0][1]
@@ -53,13 +59,8 @@ class PathPlanner:
                     points[p] = [new_y, -new_x]
                 else:			
                     points[p] = [new_x, new_y]
-            # translate coordinates for theta			
-          
-            
-          # run safegoto on the translated coordinates
-          robot = SafeGoTo()
-          robot.travel(points)
-
+            # translate coordinates for theta
+            return planned_paths
 
     def construct_path(self, end):
         """
@@ -71,47 +72,3 @@ class PathPlanner:
             path.append(current)
             current = current.parent
         return path
-
-def a_star(start, end, grid_map):
-    # Both start and end are Node objects in cartesian coordinates
-	# Before starting A-star, check if goal is traversable. Else, reject.
-	if not end.is_valid(grid_map):
-		print("goal invalid")
-		return None
-	print("goal valid")
-	opened = []
-	closed=[]
-	final = None
-	hq.heappush(opened, (0.0, start))
-
-	while (final == None) and opened:
-		# q is a Node object with x, y, theta
-		q = hq.heappop(opened)[1]
-		for move in MOVES:		# move is in world coordinates
-			if (q.is_move_valid(grid_map, move)):
-				next_node = q.apply_move(move)	# Node is returned in world coordinates
-			else:
-				next_node = None
-			#print("next node is : ", next_node) 
-			if next_node != None:
-				if next_node.euclidean_distance(end) < TOLERANCE:
-					next_node.parent = q					
-					final = next_node
-					break
-				# update heuristics h(n) and g(n)
-				next_node.h = next_node.euclidean_distance(end)
-				next_node.g = q.g + next_node.euclidean_distance(q)
-				# f(n) = h(n) + g(n)
-				next_node.f = G_MULTIPLIER * next_node.g + next_node.h
-				next_node.parent = q
-
-				# other candidate locations to put in the heap
-				potential_open = any(other_f <= next_node.f and other_next.is_similar(next_node) for other_f, other_next in opened)
-				
-				if not potential_open:
-					potential_closed = any(other_next.is_similar(next_node) and other_next.f <= next_node.f for other_next in closed)
-					if not potential_closed:
-						hq.heappush(opened, (next_node.f, next_node))
-		closed.append(q)	
-
-	return final				

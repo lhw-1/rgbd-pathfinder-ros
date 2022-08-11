@@ -92,3 +92,26 @@ def draw_paths(traversable_seg_bev, traversable_paths):
     # Return values as needed
     traversable_array = np.array(rgb_img_traversable)[:, :, 2::-1]    
     return [traversable_x, traversable_y], [starting_x, starting_y], traversable_node_found, traversable_array
+
+def choose_node_bev(traversable_seg_bev, traversable_paths, START_POINT):
+    traversable_node_found = False
+    IM_WIDTH = len(traversable_seg_bev[0])
+    IM_HEIGHT = len(traversable_seg_bev)
+
+    next_node_threshold_start = 23 * IM_HEIGHT / 32
+    next_node_threshold_end = 24 * IM_HEIGHT / 32
+
+    traversable_x = IM_WIDTH - 1
+    traversable_y = IM_HEIGHT // 2 - 1
+    starting_x = IM_WIDTH - 1 + START_POINT[0]
+    starting_y = IM_HEIGHT // 2 + IM_HEIGHT - 1 + START_POINT[1]
+
+    for y in range(next_node_threshold_end - next_node_threshold_start):
+        for x in range(IM_WIDTH // 2 * 2 + IM_WIDTH):
+            if traversable_paths[IM_HEIGHT // 2 + next_node_threshold_start + y][x] == 128:
+                traversable_node_found = True
+                traversable_x = x
+                traversable_y = IM_HEIGHT // 2 + next_node_threshold_start + y
+
+    # Return values as needed
+    return [traversable_x, traversable_y], [starting_x, starting_y], traversable_node_found

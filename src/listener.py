@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image
 # Local Imports
 from converter import convert_to_bev, convert_to_monochrome
 from node import Node
-from pathfinder import calculate_traversable_paths, draw_paths, map_segmentation_ids
+from pathfinder import calculate_traversable_paths, draw_paths, map_segmentation_ids, choose_node_bev
 from pathplanner import PathPlanner
 from segmentation import load_model, panoptic_segmentation
 
@@ -38,7 +38,7 @@ ANGULAR_Z_COUNTER = 10                  # Determine duration for the robot to ro
 # Goals
 # These variables are set according to the map grid system, not the actual pixel locations
 START_POINT = (0, 0)                        # Start is Bottom Center of the Image (Current Position)
-GOAL_POINT = (0, (IM_HEIGHT // 4) * 5)      # Goal is North of Current Position, beyond the Image
+GOAL_POINT = (30, IM_HEIGHT * 3)      # Goal is North of Current Position, beyond the Image
 # GOAL_POINT = [sys.argv[1], sys.argv[2]]
 
 # Global Variables (These are modified as the script runs)
@@ -97,30 +97,33 @@ def callback(data):
     # Convert Monochrome to Bird's Eye View
     traversable_seg_bev = convert_to_bev(traversable_seg_mnc)
 
-    # TODO TODO TODO Using the BEV Calculated, map it into the ROS Global Planner & obtain the traversable path. From there determine direction to travel
+    # Using the BEV Calculated, map it into the Path Planner & obtain the traversable path.
     planner = PathPlanner(traversable_seg_bev, START_POINT, GOAL_POINT)
-	planner.plan()
+    planned_paths = planner.plan()
 
+    # Visualisation for the Path Planner's generated path
+    traversable_array = np.full((len(planned_paths), len(planned_paths[0])), 255)
+    for e in range(len(traversable_seg_bev)):
+        for f in range(len(traversable_seg_bev[0])):
+            traversable_array[len(traversable_seg_bev) // 2 + e][len(traversable_seg_bev[0]) // 2 + f] = traversable_seg_bev[e][f][0]
+    for x in range(len(planned_paths)):
+        for y in range(len(planned_paths[0])):
+            if planned_paths[x][y] == 128:
+                traversable_array[x][y] = 128
+    # Take note that traversable array is 2x height and width of traversable_seg_bev
+    
+    # Calculate traversable paths and areas using Central path method
+    # _, traversable_paths = calculate_traversable_paths(traversable_seg_bev)
+    # traversable_point, starting_point, traversable_node_found, traversable_array = draw_paths(traversable_seg_bev, traversable_paths)
 
-
-
-
-
-
-
-
-    # Calculate traversable paths and areas
-    _, traversable_paths = calculate_traversable_paths(traversable_seg_bev)
-
-    # Calculate and draw central path
-    traversable_point, starting_point, traversable_node_found, traversable_array = draw_paths(traversable_seg_bev, traversable_paths)
+    traversable_point, starting_point, traversable_node_found = choose_node_bev(traversable_seg_bev, planned_paths, START_POINT)
 
     # Once the path for the first image is found, allow SPOT to move
     FIRST_IMAGE_RECEIVED = True
 
     # Display and save the image with traversable path
-    cv2.imwrite(RGBDP_DIR + "rgbdp_" + str(IMAGE_COUNTER) + ".png", traversable_array)
-    cv2.imshow("seg", traversable_array)
+    cv2.imwrite(RGBDP_DIR + "bev_" + str(IMAGE_COUNTER) + ".png", traversable_array)
+    cv2.imshow("bev", traversable_array)
     cv2.waitKey(10)
 
     # Increment Image counter
@@ -128,7 +131,8 @@ def callback(data):
 
     # Publish command to change steer based on diff_x
     diff_x = traversable_point[0] - starting_point[0]
-    diff_start = starting_point[0] - (IM_WIDTH // 2)
+    # diff_start = starting_point[0] - (IM_WIDTH // 2)
+    diff_start = 0
     movement_counter = 0
 
     if traversable_node_found:
