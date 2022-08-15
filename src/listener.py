@@ -1,4 +1,4 @@
-#!/usr/bin/env pythonget_cfgCvBridgeError
+#!/usr/bin/env python
 
 import cv2
 import numpy as np
