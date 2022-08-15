@@ -22,14 +22,14 @@ IMAGE_DIR = "../data/" # Input from camera
 RGBDP_DIR = "../data/rgbdp_outputs/"
 
 # Parameters
-IM_WIDTH = 640
-IM_HEIGHT = 480
+IM_WIDTH = 1280
+IM_HEIGHT = 720
 STEER_THRESHOLD = IM_WIDTH // 32        # Determine whether a diagonal line is considered forward or rotate
 CENTRAL_THRESHOLD = IM_WIDTH // 32      # Determine when to move the robot to the center
 DEMO, LOGGER = load_model()
-LINEAR_X_VEL = 0.4                # Linear x Velocity
-LINEAR_Y_VEL = 0.4                # Linear y Velocity
-ANGULAR_Z_VEL = 0.5               # Angular z Velocity
+LINEAR_X_VEL = 0.4                      # Linear x Velocity
+LINEAR_Y_VEL = 0.4                      # Linear y Velocity
+ANGULAR_Z_VEL = 0.5                     # Angular z Velocity
 LINEAR_X_COUNTER = 50                   # Determine duration for the robot to move forward
 LINEAR_X_BACKWARD_COUNTER = 30          # Determine duration for the robot to move backward
 LINEAR_Y_COUNTER = 30                   # Determine duration for the robot to move sideways
