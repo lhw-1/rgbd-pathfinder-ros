@@ -21,42 +21,61 @@ Make sure that you are installing the correct CUDA versions for your system GPU.
 
 RGBD-Pathfinder relies on the [Mask2Former Segmentation tool](https://github.com/facebookresearch/Mask2Former), which in turn relies on the [Detectron2](https://github.com/facebookresearch/detectron2) module, to perform Image Segmentation and Visualisation. 
 
-### Installation: Mask2Former and Detectron2
+### Installation: Detectron2
 
-Install the `detectron2` module using the following commands. From your project root directory:
+Install the `detectron2` module using the following commands from your project root directory.
+
+You may check [here](https://detectron2.readthedocs.io/en/latest/tutorials/install.html) for more information regarding `detectron2` installation. If using Python 3.6 or lower, you may need to install an older version of `detectron2` from source instead.
 
 ```
-git clone https://github.com/facebookresearch/detectron2.git
-cd detectron2
-pip install -e .
+python -m pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.9/index.html
 pip install git+https://github.com/cocodataset/panopticapi.git
 pip install git+https://github.com/mcordts/cityscapesScripts.git
 ```
 
-You may check [here](https://detectron2.readthedocs.io/en/latest/tutorials/install.html) for more information regarding `detectron2` installation. If using Python 3.6 or lower, you may need to install an older version of `detectron2` from source instead.
+### Installation: RGBD-Pathfinder-ROS
 
-### Installation: RGBD-Pathfinder
+Once `detectron2` has been installed, we can install and set up RGBD-Pathfinder-ROS. Follow [this guide](http://wiki.ros.org/noetic/Installation/) to install ROS Noetic for your distribution.
 
-Once `detectron2` has been installed, we can install and set up RGBD-Pathfinder.
-
-Use the commands below to clone this repository and download the ADE20K Panoptic Segmentation model:
+Once ROS Noetic has been installed for your system, set up the Catkin Workspace as per the [guide here](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment), or by following the commands below. From your root directory:
 
 ```
-cd ..
+source /opt/ros/noetic/setup.bash
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/
+catkin_make install
+source devel/setup.bash
+```
+
+Use the commands below to clone this repository as a ROS Node and download the ADE20K Panoptic Segmentation model:
+
+```
+cd src/
 git clone https://github.com/lhw-1/rgbd-pathfinder-ros.git
+mv rgbd-pathfinder-ros/ pathfinder/
 cd rgbd-pathfinder-ros
+git submodule init
+git submodule update
 pip install -r requirements.txt
 sh init.sh
-
 ```
 
 Alternatively, you may download your model of choice from the [Mask2Former Model Zoo](https://github.com/facebookresearch/Mask2Former/blob/main/MODEL_ZOO.md), and the corresponding configuration files from the [Mask2Former Configs](https://github.com/facebookresearch/Mask2Former/tree/main/configs). Refer to [this guide](https://github.com/facebookresearch/Mask2Former/blob/main/GETTING_STARTED.md) for more information on the available models and corresponding configuration files. 
 
 If using a model other than ADE20K, you may also need to modify the list of categories that should be classified as traversable. This list can be found [here](https://github.com/lhw-1/rgbd-pathfinder/blob/main/src/standalone/traversable.py), with instructions on how to do so.
 
-Finally, change `init.sh` to run with the correct model and the configuration file.
+Finally, change `init.sh` to run with the correct model and the configuration file if you are using any model other than the default.
 
 ### Known Problems
+
+Some Python files in RGBD-Pathfinder-ROS may not be recognised. In this case, add the pathfinder src to the PYTHONPATH:
+
+```
+export PYTHONPATH=$PYTHONPATH:~/catkin_ws/src/pathfinder/src/
+export PYTHONPATH=$PYTHONPATH:~/catkin_ws/src/pathfinder/src/Mask2Former/
+```
+
+This will allow Python to find the necessary scripts.
 
 In some cases, `detectron2` may need to be rebuilt if PyTorch was re-installed during the installation process.
 
